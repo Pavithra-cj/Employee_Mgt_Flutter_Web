@@ -1,7 +1,7 @@
 {
     "name": "emp_mgt_flutter_web",
-    "short_name": "emp_mgt_flutter_web",
-    "start_url": ".",
+    "short_name": "EmployeeMgtWeb",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
