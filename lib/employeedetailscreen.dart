@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 
 class EmployeeDetailDialog extends StatefulWidget {
   final int employeeId;
@@ -21,6 +24,8 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
   late TextEditingController _emailController;
   late TextEditingController _positionController;
   bool isLoading = false;
+  File? _imageFile; // Store the selected image file
+  String? _imageUrl; // Store the URL of the image
 
   @override
   void initState() {
@@ -43,6 +48,7 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
       _nameController = TextEditingController(text: employee['name']);
       _emailController = TextEditingController(text: employee['email']);
       _positionController = TextEditingController(text: employee['position']);
+      _imageUrl = 'http://localhost:8083/api/v1/employees/${widget.employeeId}/profile-picture'; // Set the image URL
     } else {
       throw Exception('Failed to load employee details');
     }
@@ -87,6 +93,40 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_imageFile == null) return;
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://localhost:8083/api/v1/employees/${widget.employeeId}/profile-picture'),
+    );
+    request.headers['Authorization'] = 'Bearer ${widget.token}';
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        await _imageFile!.readAsBytes(),
+        filename: path.basename(_imageFile!.path),
+      ),
+    );
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      _showAlert('Success', 'Image uploaded successfully', true);
+    } else {
+      _showAlert('Error', 'Failed to upload image: ${response.statusCode}', false);
+    }
+  }
+
   void _showAlert(String title, String message, bool isSuccess) {
     showDialog(
       context: context,
@@ -126,8 +166,16 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
           children: [
             CircleAvatar(
               radius: 70,
-              backgroundImage: NetworkImage(
-                  'http://localhost:8083/api/v1/employees/${widget.employeeId}/profile-picture'),
+              backgroundImage: _imageFile != null
+                  ? FileImage(_imageFile!)
+                  : _imageUrl != null
+                  ? NetworkImage(_imageUrl!)
+                  : AssetImage('assets/default_avatar.png') as ImageProvider,
+            ),
+            SizedBox(height: 8),
+            TextButton(
+              onPressed: _pickImage,
+              child: Text('Upload an image'),
             ),
             SizedBox(height: 16),
             TextFormField(
@@ -151,7 +199,12 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: submitEdit,
+                        onPressed: () async {
+                          await submitEdit();
+                          if (_imageFile != null) {
+                            await _uploadImage();
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.teal,
                           foregroundColor: Colors.white,
