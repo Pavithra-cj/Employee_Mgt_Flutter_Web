@@ -26,25 +26,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _initialCall();
-  }
-
-  Future<void> _initialCall() async {
-    try {
-      final response = await http.get(Uri.parse('http://localhost:8083/'));
-      if (response.statusCode == 200) {
-        _showAlert('Initial call successful');
-      } else {
-        _showAlert('Initial call failed with status: ${response.statusCode}');
-      }
-    } catch (e) {
-      _showAlert('Initial call error: $e');
-    }
-  }
+  String? _token;
 
   Future<void> _login() async {
     final String username = _usernameController.text;
@@ -70,21 +52,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         String responseBody = response.body;
 
-        try {
-          final Map<String, dynamic> responseData = json.decode(responseBody);
-          if (responseData['message'] == 'Login successful') {
-            _showAlert('Login successful');
-            _navigateToHomeScreen();
-          } else {
-            _showAlert('Login failed: ${responseData['message']}');
-          }
-        } catch (e) {
-          if (responseBody == 'Login successful') {
-            _showAlert('Login successful');
-            _navigateToHomeScreen();
-          } else {
-            _showAlert('Login failed: $responseBody');
-          }
+        _token = responseBody;
+
+        if (_token != null && _token!.isNotEmpty) {
+          _showAlert('Login successful');
+          _navigateToHomeScreen();
+        } else {
+          _showAlert('Login failed: No token received');
         }
       } else {
         _showAlert('Login failed with status: ${response.statusCode}');
@@ -117,7 +91,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void _navigateToHomeScreen() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(token: _token!),
+      ),
     );
   }
 
@@ -226,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.center,
                         child: Text(
-                          'Forget Password',
+                          'Register',
                           style: TextStyle(color: Colors.blueAccent),
                         ),
                       ),

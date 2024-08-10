@@ -1,17 +1,20 @@
 import 'dart:convert';
-import 'package:emp_mgt_flutter_web/addemployeescreen.dart';
-import 'package:emp_mgt_flutter_web/employeedetailscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:emp_mgt_flutter_web/addemployeescreen.dart';
+import 'package:emp_mgt_flutter_web/employeedetailscreen.dart';
 
 class HomeScreen extends StatefulWidget {
+  final String? token;
+
+  HomeScreen({this.token});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> data = [];
-  int page = 1;
 
   @override
   void initState() {
@@ -21,33 +24,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> fetchData() async {
     try {
-      final response = await http.get(Uri.parse('https://reqres.in/api/users?page=$page'));
-      final json = jsonDecode(response.body);
+      final response = await http.get(
+        Uri.parse('http://localhost:8083/api/v1/employees'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
 
-      setState(() {
-        data.addAll(json['data']);
-      });
+      if (response.statusCode == 200) {
+        final List<dynamic> json = jsonDecode(response.body);
+
+        setState(() {
+          data = json;
+        });
+      } else {
+        print('Failed to load data: ${response.statusCode} ${response.body}');
+      }
     } catch (error) {
       print('Error fetching data: $error');
     }
   }
 
-  void showEmployeeDetailDialog(user) {
-    showDialog(
+  void showEmployeeDetailDialog(dynamic employee) async{
+    final result = await showDialog(
       context: context,
       builder: (context) {
-        return EmployeeDetailDialog(employee: user);
+        return EmployeeDetailDialog(
+          employeeId: employee['id'],
+          token: widget.token,
+        );
       },
     );
+
+    if (result == true) {
+      fetchData();
+    }
   }
 
-  void navigateToAddEmployee() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddEmployee(),
-      ),
+  void showAddEmployeeDialog() async {
+    final result = await showDialog(
+      context: context,
+      builder: (context) {
+        return AddEmployeeDialog(token: widget.token);
+      },
     );
+
+    if (result == true) {
+      fetchData();
+    }
   }
 
   @override
@@ -59,62 +83,62 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.lightBlue,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: data.length,
-                itemBuilder: (context, index) {
-                  final item = data[index];
-                  return GestureDetector(
-                    onTap: () => showEmployeeDetailDialog(item),
-                    child: Card(
-                      margin: EdgeInsets.symmetric(horizontal: 25, vertical: 7),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+        child: data.isEmpty
+            ? Center(child: CircularProgressIndicator())
+            : ListView.builder(
+          itemCount: data.length,
+          itemBuilder: (context, index) {
+            final item = data[index];
+            final imageUrl = item['profilePicturePath'] ?? 'https://via.placeholder.com/150';
+
+            return GestureDetector(
+              onTap: () => showEmployeeDetailDialog(item),
+              child: Card(
+                margin: EdgeInsets.symmetric(horizontal: 25, vertical: 7),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundImage: NetworkImage(imageUrl),
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Row(
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CircleAvatar(
-                              radius: 25,
-                              backgroundImage: NetworkImage(item['avatar']),
+                            Text(
+                              'Name: ${item['name']}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                              ),
                             ),
-                            SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'ID: ${item['id']}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                                Text(
-                                  'Name: ${item['first_name']} ${item['last_name']}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              'Position: ${item['position']}',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                fontSize: 15,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  );
-                },
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: navigateToAddEmployee,
+        onPressed: showAddEmployeeDialog,
         child: Icon(Icons.add),
         backgroundColor: Colors.lightBlue,
       ),
