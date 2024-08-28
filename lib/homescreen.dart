@@ -1,6 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 import 'package:emp_mgt_flutter_web/addemployeescreen.dart';
 import 'package:emp_mgt_flutter_web/employeedetailscreen.dart';
 
@@ -45,7 +49,35 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void showEmployeeDetailDialog(dynamic employee) async{
+  Future<void> downloadEmployeeListPdf() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:8083/api/v1/employees/report'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final contentDisposition = response.headers['content-disposition'];
+        final filename = contentDisposition?.split('filename=')[1]?.replaceAll('"', '') ?? 'Employee_List.pdf';
+
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/$filename';
+
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+
+        await OpenFile.open(filePath);
+      } else {
+        print('Failed to download PDF: ${response.statusCode} ${response.body}');
+      }
+    } catch (error) {
+      print('Error downloading or opening PDF: $error');
+    }
+  }
+
+  void showEmployeeDetailDialog(dynamic employee) async {
     final result = await showDialog(
       context: context,
       builder: (context) {
@@ -81,6 +113,24 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Employee Management System'),
         centerTitle: true,
         backgroundColor: Colors.lightBlue,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: TextButton(
+              onPressed: downloadEmployeeListPdf,
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Download Employee List PDF',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: data.isEmpty
