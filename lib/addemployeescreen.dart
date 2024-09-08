@@ -78,7 +78,7 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Add Employee'),
+      title: const Text('Add Employee'),
       content: SizedBox(
         width: 400,
         child: Form(
@@ -91,7 +91,7 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: const Icon(Icons.person),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -103,7 +103,7 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
                   return null;
                 },
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
 
               // Email Field
               TextFormField(
@@ -111,7 +111,7 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
+                  prefixIcon: const Icon(Icons.email),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -126,14 +126,14 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
                   return null;
                 },
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
 
               // Position Field
               TextFormField(
                 controller: _positionController,
                 decoration: InputDecoration(
                   labelText: 'Position',
-                  prefixIcon: Icon(Icons.work),
+                  prefixIcon: const Icon(Icons.work),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -145,7 +145,7 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
                   return null;
                 },
               ),
-              SizedBox(height: 24.0),
+              const SizedBox(height: 24.0),
             ],
           ),
         ),
@@ -155,7 +155,7 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: Text('Cancel'),
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: _submitData,
@@ -163,7 +163,7 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
             backgroundColor: Colors.teal,
             foregroundColor: Colors.white,
             elevation: 5,

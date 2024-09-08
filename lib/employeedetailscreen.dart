@@ -157,10 +157,10 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : Container(
         width: 300,
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -170,29 +170,29 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
                   ? FileImage(_imageFile!)
                   : _imageUrl != null
                   ? NetworkImage(_imageUrl!)
-                  : AssetImage('assets/default_avatar.png') as ImageProvider,
+                  : const AssetImage('assets/default_avatar.png') as ImageProvider,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextButton(
               onPressed: _pickImage,
-              child: Text('Upload an image'),
+              child: const Text('Upload an image'),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
+              decoration: const InputDecoration(labelText: 'Name'),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _positionController,
-              decoration: InputDecoration(labelText: 'Position'),
+              decoration: const InputDecoration(labelText: 'Position'),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Column(
               children: [
                 Row(
@@ -209,12 +209,12 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
                           backgroundColor: Colors.teal,
                           foregroundColor: Colors.white,
                         ),
-                        child: Text('Edit'),
+                        child: const Text('Edit'),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -224,12 +224,12 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
                         ),
-                        child: Text('Delete'),
+                        child: const Text('Delete'),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -241,7 +241,7 @@ class _EmployeeDetailDialogState extends State<EmployeeDetailDialog> {
                           backgroundColor: Colors.grey,
                           foregroundColor: Colors.white,
                         ),
-                        child: Text('Cancel'),
+                        child: const Text('Cancel'),
                       ),
                     ),
                   ],

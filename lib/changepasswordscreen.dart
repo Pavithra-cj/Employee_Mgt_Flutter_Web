@@ -1,74 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
-import 'otpscreen.dart';
+import 'homescreen.dart';
 
-void main() {
-  runApp(const LoginApp());
-}
+class ChangePasswordScreen extends StatefulWidget {
+  final String username;
 
-class LoginApp extends StatelessWidget {
-  const LoginApp({super.key});
+  const ChangePasswordScreen({super.key, required this.username});
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
-    );
-  }
+  _ChangePasswordScreenState createState() => _ChangePasswordScreenState();
 }
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-
-  @override
-  _LoginScreenState createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameController = TextEditingController();
+class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController _passwordController = TextEditingController();
-  String? _token;
 
-  Future<void> _login() async {
-    final String username = _usernameController.text;
-    final String password = _passwordController.text;
+  Future<void> _changePassword() async {
+    final String newPassword = _passwordController.text;
 
-    if (username.isEmpty || password.isEmpty) {
-      _showAlert('Username and password cannot be empty');
+    if (newPassword.isEmpty) {
+      _showAlert('Password cannot be empty');
       return;
     }
 
     final Map<String, String> body = {
-      'username': username,
-      'password': password,
+      'username': widget.username,
+      'newPassword': newPassword,
     };
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8083/login'),
+        Uri.parse('http://localhost:8083/change-password'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body),
       );
 
       if (response.statusCode == 200) {
-        String responseBody = response.body;
-
-        _token = responseBody;
-
-        if (_token != null && _token!.isNotEmpty) {
-          _showAlert('Login successful');
-          _navigateToOtpScreen(username);
-        } else {
-          _showAlert('Login failed: No token received');
-        }
+        _showAlert('Password changed successfully');
+        _navigateToHomeScreen();
       } else {
-        _showAlert('Login failed with status: ${response.statusCode}');
+        _showAlert('Password change failed with status: ${response.statusCode}');
       }
     } catch (e) {
-      _showAlert('Login error: $e');
+      _showAlert('Password change error: $e');
     }
   }
 
@@ -77,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Login Status'),
+          title: const Text('Password Change Status'),
           content: Text(message),
           actions: [
             TextButton(
@@ -92,11 +67,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _navigateToOtpScreen(String username) {
-    Navigator.push(
+  void _navigateToHomeScreen() {
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => OtpScreen(username: username),
+        builder: (context) => const HomeScreen(),
       ),
     );
   }
@@ -143,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Login',
+                        'Change Password',
                         style: GoogleFonts.roboto(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
@@ -159,25 +134,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      TextField(
-                        controller: _usernameController,
-                        decoration: InputDecoration(
-                          labelText: 'Username',
-                          prefixIcon: const Icon(Icons.person),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                      const Text(
+                        'Change your password',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
                         ),
                       ),
                       const SizedBox(height: 16),
                       TextField(
                         controller: _passwordController,
-                        obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock),
+                          prefixIcon: const Icon(Icons.security),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
@@ -185,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _login,
+                          onPressed: _changePassword,
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
@@ -194,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             backgroundColor: Colors.teal,
                           ),
                           child: Text(
-                            'Login',
+                            'Change Password',
                             style: GoogleFonts.roboto(
                               fontSize: 20,
                               color: Colors.white,

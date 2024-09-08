@@ -1,74 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
-import 'otpscreen.dart';
+import 'changepasswordscreen.dart';
+import 'homescreen.dart';
 
-void main() {
-  runApp(const LoginApp());
-}
+class OtpScreen extends StatefulWidget {
+  final String username;
 
-class LoginApp extends StatelessWidget {
-  const LoginApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
-    );
-  }
-}
-
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const OtpScreen({super.key, required this.username});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _OtpScreenState createState() => _OtpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  String? _token;
+class _OtpScreenState extends State<OtpScreen> {
+  final TextEditingController _otpController = TextEditingController();
 
-  Future<void> _login() async {
-    final String username = _usernameController.text;
-    final String password = _passwordController.text;
+  Future<void> _verifyOtp() async {
+    final String otp = _otpController.text;
 
-    if (username.isEmpty || password.isEmpty) {
-      _showAlert('Username and password cannot be empty');
+    if (otp.isEmpty) {
+      _showAlert('OTP cannot be empty');
       return;
     }
 
     final Map<String, String> body = {
-      'username': username,
-      'password': password,
+      'username': widget.username,
+      'otp': otp,
     };
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8083/login'),
+        Uri.parse('http://localhost:8083/verify-otp'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body),
       );
 
       if (response.statusCode == 200) {
         String responseBody = response.body;
-
-        _token = responseBody;
-
-        if (_token != null && _token!.isNotEmpty) {
-          _showAlert('Login successful');
-          _navigateToOtpScreen(username);
+        if (responseBody.startsWith("First time login")) {
+          _showAlert('First time login, please change your password');
+          _navigateToChangePasswordScreen();
         } else {
-          _showAlert('Login failed: No token received');
+          print('Token: $responseBody');
+          _navigateToHomeScreen(responseBody);
         }
       } else {
-        _showAlert('Login failed with status: ${response.statusCode}');
+        _showAlert('OTP verification failed with status: ${response.statusCode}');
       }
     } catch (e) {
-      _showAlert('Login error: $e');
+      _showAlert('OTP verification error: $e');
     }
   }
 
@@ -77,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Login Status'),
+          title: const Text('OTP Status'),
           content: Text(message),
           actions: [
             TextButton(
@@ -92,11 +74,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _navigateToOtpScreen(String username) {
-    Navigator.push(
+  void _navigateToHomeScreen(String token) {
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => OtpScreen(username: username),
+        builder: (context) => HomeScreen(token: token),
+      ),
+    );
+  }
+
+  void _navigateToChangePasswordScreen() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChangePasswordScreen(username: widget.username),
       ),
     );
   }
@@ -143,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Login',
+                        'OTP Verification',
                         style: GoogleFonts.roboto(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
@@ -159,33 +150,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      TextField(
-                        controller: _usernameController,
-                        decoration: InputDecoration(
-                          labelText: 'Username',
-                          prefixIcon: const Icon(Icons.person),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                      const Text(
+                        'Enter the OTP sent to your email to verify your identity',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
                         ),
                       ),
                       const SizedBox(height: 16),
                       TextField(
-                        controller: _passwordController,
-                        obscureText: true,
+                        controller: _otpController,
                         decoration: InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock),
+                          labelText: 'OTP',
+                          prefixIcon: const Icon(Icons.security),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
+                        keyboardType: TextInputType.number,
                       ),
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _login,
+                          onPressed: _verifyOtp,
                           style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
@@ -194,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             backgroundColor: Colors.teal,
                           ),
                           child: Text(
-                            'Login',
+                            'Verify OTP',
                             style: GoogleFonts.roboto(
                               fontSize: 20,
                               color: Colors.white,
