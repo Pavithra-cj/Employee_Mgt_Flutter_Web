@@ -6,6 +6,7 @@ import 'package:emp_mgt_flutter_web/addemployeescreen.dart';
 import 'package:emp_mgt_flutter_web/employeedetailscreen.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? token;
@@ -18,11 +19,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> data = [];
+  String? role;  // Variable to store the role
 
   @override
   void initState() {
     super.initState();
+    decodeToken();
     fetchData();
+  }
+
+  // Function to decode the JWT token and extract the role
+  void decodeToken() {
+    if (widget.token != null) {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(widget.token!);
+      setState(() {
+        role = decodedToken['role'];  // Assuming the role is stored as 'role' in the token
+      });
+    }
   }
 
   Future<void> fetchData() async {
@@ -32,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
-      },
+        },
       );
 
       if (response.statusCode == 200) {
@@ -49,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void showEmployeeDetailDialog(dynamic employee) async{
+  void showEmployeeDetailDialog(dynamic employee) async {
     final result = await showDialog(
       context: context,
       builder: (context) {
@@ -106,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,30 +127,34 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         backgroundColor: Colors.lightBlue,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: TextButton(
-              onPressed: downloadEmployeeListPdf,
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: TextButton(
+                onPressed: downloadEmployeeListPdf,
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Download Employee List PDF',
+                  style: TextStyle(color: Colors.black),
                 ),
               ),
-              child: const Text(
-                'Download Employee List PDF',
-                style: TextStyle(color: Colors.black),
-              ),
             ),
-          ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: showAddEmployeeDialog,
+            ),
         ],
       ),
       body: SafeArea(
         child: data.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
+          itemCount: data.length,
+          itemBuilder: (context, index) {
             final item = data[index];
             final imageUrl = item['profilePicturePath'] ?? 'https://via.placeholder.com/150';
 
@@ -180,6 +196,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                      if (role == 'ROLE_ADMIN')
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            // Implement delete functionality here
+                          },
+                        ),
                     ],
                   ),
                 ),
@@ -187,11 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: showAddEmployeeDialog,
-        backgroundColor: Colors.lightBlue,
-        child: const Icon(Icons.add),
       ),
     );
   }

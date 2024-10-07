@@ -31,7 +31,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8083/change-password'),
+        Uri.parse('http://localhost:8083/changePassword'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body),
       );
